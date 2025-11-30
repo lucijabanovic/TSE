@@ -1,0 +1,149 @@
+ml () {  module ml "$@"
+}
+module () {  local _mlredir=1;
+ if [ -n "${MODULES_REDIRECT_OUTPUT+x}" ]; then
+ if [ "$MODULES_REDIRECT_OUTPUT" = '0' ]; then
+ _mlredir=0;
+ else
+ if [ "$MODULES_REDIRECT_OUTPUT" = '1' ]; then
+ _mlredir=1;
+ fi;
+ fi;
+ fi;
+ case " $@ " in 
+ *' --no-redirect '*)
+ _mlredir=0
+ ;;
+ *' --redirect '*)
+ _mlredir=1
+ ;;
+ esac;
+ if [ $_mlredir -eq 0 ]; then
+ _module_raw "$@";
+ else
+ _module_raw "$@" 2>&1;
+ fi
+}
+_module_raw () {  eval "$(/usr/bin/tclsh8.6 '/usr/lib/x86_64-linux-gnu/modulecmd.tcl' bash "$@")";
+ _mlstatus=$?;
+ return $_mlstatus
+}
+#!/bin/bash
+
+# This script tests the functionality of the indexer program.
+# It verifies correct handling of valid and invalid inputs,
+# as well as the creation and correctness of the index file.
+
+# Enable verbose output for debugging
+set -v
+
+# Create a temporary directory for testing
+mkdir -p test_pages
+
+# Test 1: Running indexer with valid arguments
+echo "Test 1: Running indexer with valid arguments"
+Test 1: Running indexer with valid arguments
+# Create a test crawler file to simulate the output of the crawler
+echo "Creating test crawler file"
+Creating test crawler file
+echo "test_pages/.crawler" > test_pages/.crawler
+
+echo "http://example.cs.dartmouth.edu/" >> test_pages/1
+echo "0" >> test_pages/1
+echo "<html><body>This is a test page</body></html>" >> test_pages/1
+
+echo "http://another-example.cs.dartmouth.edu/" >> test_pages/2
+echo "1" >> test_pages/2
+echo "<html><body>Another test page</body></html>" >> test_pages/2
+
+# Run the indexer with the test directory and output index file
+./indexer test_pages test_index.index
+Error - unable to read file (Crawler file)
+
+cat test_pages/1
+http://example.cs.dartmouth.edu/
+0
+<html><body>This is a test page</body></html>
+# Check if the index file was created successfully
+if [ -f test_index.index ]; then
+    echo "Success: Index file created."
+else
+    echo "Failure: Index file not created."
+fi
+Success: Index file created.
+
+# Test 2: Run indextest to check index file format
+echo "Test 2: Running indextest on created index file"
+Test 2: Running indextest on created index file
+./indextest test_index.index new_test_index.index
+
+# Capture the output of the indextest to testing.out
+if [ -f new_test_index.index ]; then
+    echo "Success: Indextest ran successfully. Output saved to new_test_index.index."
+else
+    echo "Failure: Indextest did not produce output."
+fi
+Success: Indextest ran successfully. Output saved to new_test_index.index.
+
+# Check if the expected output is formatted correctly
+echo "Output of indextest:"
+Output of indextest:
+cat new_test_index.index
+another 2 1 
+page 1 1 2 1 
+this 1 1 
+test 1 1 2 1 
+
+# Test 3: Running the indexer with an invalid page directory
+echo "Test 3: Running indexer with invalid page directory"
+Test 3: Running indexer with invalid page directory
+./indexer invalid_directory test_index.index
+Error - page directory was not produced by the Crawler
+
+# Check the output for expected error message
+if [ $? -ne 0 ]; then
+    echo "Success: Handled invalid page directory correctly."
+else
+    echo "Failure: Did not handle invalid page directory."
+fi
+Success: Handled invalid page directory correctly.
+
+# Test 4: Running indexer without sufficient arguments
+echo "Test 4: Running indexer with insufficient arguments"
+Test 4: Running indexer with insufficient arguments
+./indexer test_pages
+Usage: ./indexer <pageDirectory> <indexFilename>
+
+# Check the output for expected error message
+if [ $? -ne 0 ]; then
+    echo "Success: Handled insufficient arguments correctly."
+else
+    echo "Failure: Did not handle insufficient arguments."
+fi
+Success: Handled insufficient arguments correctly.
+
+# Test 5: Running indexer on an empty page directory
+echo "Test 5: Running indexer on an empty page directory"
+Test 5: Running indexer on an empty page directory
+# Create an empty page directory for testing
+mkdir -p empty_directory
+
+# Run the indexer with the empty directory
+./indexer empty_directory empty_index.index
+Error - page directory was not produced by the Crawler
+
+# Check if the index file was created and is empty
+if [ -f empty_index.index ]; then
+    echo "Success: Index file created for empty directory."
+else
+    echo "Failure: Index file not created for empty directory."
+fi
+Failure: Index file not created for empty directory.
+
+# Cleanup: Remove test files and directories
+echo "Cleaning up test files and directories"
+Cleaning up test files and directories
+rm -rf test_pages empty_directory test_index.index new_test_index.index
+
+echo "All tests completed."
+All tests completed.

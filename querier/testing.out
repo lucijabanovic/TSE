@@ -1,0 +1,116 @@
+ml () {  module ml "$@"
+}
+module () {  local _mlredir=1;
+ if [ -n "${MODULES_REDIRECT_OUTPUT+x}" ]; then
+ if [ "$MODULES_REDIRECT_OUTPUT" = '0' ]; then
+ _mlredir=0;
+ else
+ if [ "$MODULES_REDIRECT_OUTPUT" = '1' ]; then
+ _mlredir=1;
+ fi;
+ fi;
+ fi;
+ case " $@ " in 
+ *' --no-redirect '*)
+ _mlredir=0
+ ;;
+ *' --redirect '*)
+ _mlredir=1
+ ;;
+ esac;
+ if [ $_mlredir -eq 0 ]; then
+ _module_raw "$@";
+ else
+ _module_raw "$@" 2>&1;
+ fi
+}
+_module_raw () {  eval "$(/usr/bin/tclsh8.6 '/usr/lib/x86_64-linux-gnu/modulecmd.tcl' bash "$@")";
+ _mlstatus=$?;
+ return $_mlstatus
+}
+#!/bin/bash
+
+# testing.sh - Test script for the Tiny Search Engine's Querier
+
+# Ensure we are using bash and print each command before executing
+# set -v
+
+# Test Setup
+# Define the page directory and index file paths
+PAGE_DIRECTORY="../webpages"               # Adjust this to your actual page directory
+INDEX_FILE="../indexer/indexFile.index"    # Adjust this to your actual index filename
+
+# Test 1: Valid query
+echo "Running Test 1: Valid Query"
+Running Test 1: Valid Query
+echo "page and home" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect merged set of documents
+Score: 1
+ID: 3
+URL: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+
+Score: 1
+ID: 1
+URL: http://cs50tse.cs.dartmouth.edu/tse/letters/
+
+
+# Test 2: Query with "or" operator
+echo "Running Test 2: Query with OR Operator"
+Running Test 2: Query with OR Operator
+echo "page home or search breadth" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect intersected set of documents
+Score: 1
+ID: 4
+URL: http://cs50tse.cs.dartmouth.edu/tse/letters/B.html
+
+Score: 1
+ID: 3
+URL: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+
+Score: 1
+ID: 1
+URL: http://cs50tse.cs.dartmouth.edu/tse/letters/
+
+
+# Test 3: Query with "and" operator
+echo "Running Test 3: Query with AND Operator"
+Running Test 3: Query with AND Operator
+echo "for and the and algorithm" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect merged set of documents
+
+# Test 4: Invalid query (contains non-alphabetic characters)
+echo "Running Test 4: Invalid Query (Non-Alphabetic Characters)"
+Running Test 4: Invalid Query (Non-Alphabetic Characters)
+echo "home 4 home page." | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect error for invalid characters
+Error: query contains an invalid character
+Error: invalid query
+
+# Test 5: Query with leading operator
+echo "Running Test 5: Query with Leading Operator"
+Running Test 5: Query with Leading Operator
+echo "and for the playground" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect error for operator at beginning
+Error: an operator cannot be at the beginning or the end of the query
+Error: literal check failed
+Error: invalid query
+
+# Test 6: Query with trailing operator
+echo "Running Test 6: Query with Trailing Operator"
+Running Test 6: Query with Trailing Operator
+echo "playground breadth and" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect error for operator at end
+Error: an operator cannot be at the beginning or the end of the query
+Error: literal check failed
+Error: invalid query
+
+# Test 7: Adjacent operators
+echo "Running Test 7: Adjacent Operators"
+Running Test 7: Adjacent Operators
+echo "home the for the and and search" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect error for adjacent operators
+Error: two operators cannot be adjacent
+Error: literal check failed
+Error: invalid query
+
+# Test 8: Invalid words
+echo "Running Test 8: Invalid words"
+Running Test 8: Invalid words
+echo "Bloop Haha huhuhu jeeez" | ./querier "$PAGE_DIRECTORY" "$INDEX_FILE"  # Expect an error message
+Warning: word 'bloop' cannot be found
+Warning: word 'haha' cannot be found
+Warning: word 'huhuhu' cannot be found
+Warning: word 'jeeez' cannot be found
